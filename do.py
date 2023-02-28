@@ -40,7 +40,7 @@ def get_onbuy_data(path=''):
         '*订单号': list(df['Order Number']),
         '*店铺账号': ['手工订单']*df_length,
         '*sku': list(df['SKU']),
-        "属性(可填写SKU尺寸、颜色等)": f_dm*df_length,
+        "属性(可填写SKU尺寸、颜色等)": [f_dm]*df_length,
         '*数量（大于0的整数）': list(df['Quantity']),
         '*单价': list(df['Product Unit Price']),
         '总运费': empt,
