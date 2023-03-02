@@ -23,7 +23,7 @@ def get_onbuy_data(path=''):
     # 店面名
     s_path = path.split('.')
     f_dm = s_path[0] or 'XMSTnew'
-    print('====', path, s_path[-1])
+    # print('====', path, s_path[-1])
 
     if path.endswith('.xls'):
         # 读取excel
@@ -33,7 +33,7 @@ def get_onbuy_data(path=''):
         df = pd.read_csv(r'./'+path, usecols=onbuy_col,
                          converters={'Customer': split_customer}, encoding='utf-8')
     # df = pd.concat([df1, df2])
-    print(df, '\n  -------')
+    # print(df, '\n  -------')
     # df_li = df.values.tolist()
     # print(df_li, '\n -----------')
 
@@ -50,25 +50,28 @@ def get_onbuy_data(path=''):
     # print(town)
 
     for i in range(df_length):
-        # 城市是否多个
-        if ',' in town[i]:
-            # 省/州是否空
-            if pd.isnull(county[i]):
-                county[i] = town[i].split(',')[-1]
+        # town是否多个
+        town_arr = town[i].split(',')
+        if len(town_arr) >1:
+            # town：城市有','没后续名字
+            if town_arr[-1].isspace():
+                town[i] = town_arr[0] # 去除','
+                town_arr[-1] = town_arr[0]
             else:
-                county[i] = town[i]
-            # 地址3是否空
-            if pd.isnull(address3[i]):
-                address3[i] = town[i].split(',')[0]
-                town[i] = town[i].split(',')[-1]
-        else:
-            # 省/州是否空
-            if pd.isnull(county[i]):
-                county[i] = town[i]
+                # 地址3是否空
+                if pd.isnull(address3[i]):
+                    address3[i] = town_arr[0]
+                    town[i] = town_arr[-1]
+                
+        # 省/州是否空
+        if pd.isnull(county[i]):
+            county[i] = town_arr[-1]
 
         # 地址3和地址2处理叠加不为空
-        if pd.isnull(address2[i]): address2[i]=''
-        if pd.isnull(address3[i]): address3[i]=''
+        if pd.isnull(address2[i]):
+            address2[i] = ''
+        if pd.isnull(address3[i]):
+            address3[i] = ''
         address2[i] = (address2[i]+','+address3[i]).strip(',')
 
     # 处理表头数据
@@ -117,11 +120,14 @@ def get_onbuy_data(path=''):
 def get_dist_data():
     count_data = pd.DataFrame()
     file_list = get_file()
+    if not len(file_list):
+        print('没有需要转换的csv/xls文件')
+        return
     # print(file_list)
     o_name = file_list[0].split('.')[0]
     for i in file_list:
         count_data = pd.concat([count_data, get_onbuy_data(i)])
-
+        os.rename(i, '(源数据)'+i)  # 重命名文件
         # try:
         #     os.remove(i)
         #     print(f'{i}文件删除完毕')
@@ -143,9 +149,9 @@ def get_file(path='./'):
         print('目录为空，不执行操作\n')
 
     for f in files:
-        f_name = f.split('.')
+        # f_name = f.split('.')
         # if (f_name[-1] == 'csv' or f_name[-1] == 'xls'):
-        if (f_name[-1] == 'csv'):
+        if f.endswith('csv') and ('源数据' not in f):
             xls.append(f)
             print('待处理xls文件：', os.path.join(path, f))
     return xls
