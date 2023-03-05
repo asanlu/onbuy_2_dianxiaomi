@@ -1,5 +1,8 @@
 import pandas as pd
 import os
+import tkinter as tk
+# from tkinter import ttk
+from tkinter import filedialog as fd
 
 # 店小蜜需要的数据
 dianxiaomi_col = ['*订单号', '*店铺账号', '*sku',	"属性(可填写SKU尺寸、颜色等)", '*数量（大于0的整数）',
@@ -9,28 +12,24 @@ onbuy_col = ['Order Number', 'SKU', 'Quantity', 'Product Unit Price', 'Customer'
              'Delivery Address Line 1', 'Delivery Address Line 2', 'Delivery Address Line 3', 'Delivery Address Town', 'Delivery Address County', 'Site', 'Delivery Address Postcode']
 
 # 处理customer字段藏手机号
-
-
 def split_customer(str):
     return str.split(',')[1]
 
 # 获取excel数据
-
-
 def get_onbuy_data(path=''):
     if not path:
         return
     # 店面名
-    s_path = path.split('.')
-    f_dm = s_path[0] or 'XMSTnew'
+    s_path = path.split('/')
+    f_dm = s_path[-1] or '未设置默认店名'
     # print('====', path, s_path[-1])
 
     if path.endswith('.xls'):
         # 读取excel
-        df = pd.read_excel(r'./'+path, usecols=onbuy_col,
+        df = pd.read_excel(rf'{path}', usecols=onbuy_col,
                            converters={'Customer': split_customer})
     elif path.endswith('.csv'):
-        df = pd.read_csv(r'./'+path, usecols=onbuy_col,
+        df = pd.read_csv(rf'{path}', usecols=onbuy_col,
                          converters={'Customer': split_customer}, encoding='utf-8')
     # df = pd.concat([df1, df2])
     # print(df, '\n  -------')
@@ -117,22 +116,20 @@ def get_onbuy_data(path=''):
 
 
 # 生成目标文件
-def get_dist_data():
+def get_dist_data(file_list = []):
     count_data = pd.DataFrame()
-    file_list = get_file()
+    # file_list = get_file()
     if not len(file_list):
         print('没有需要转换的csv/xls文件')
         return
-    # print(file_list)
-    o_name = file_list[0].split('.')[0]
+    print(file_list)
+    o_name = file_list[0].split('/')[-1][:-4]
+    print('o_name',o_name)
     for i in file_list:
         count_data = pd.concat([count_data, get_onbuy_data(i)])
-        os.rename(i, '(源数据)'+i)  # 重命名文件
-        # try:
-        #     os.remove(i)
-        #     print(f'{i}文件删除完毕')
-        # except (FileNotFoundError):
-        #     print('文件不存在')
+        # 重命名文件
+        fname = os.path.basename(i)
+        # os.rename(i, i.replace(fname, '(源数据)'+fname))
 
     # print('====', count_data)
     count_data.to_excel(o_name+"店小秘订单.xls", index=False)
@@ -168,8 +165,62 @@ def file_is_openState(file_path):
             return True
         else:
             return False
+        
+# 多选择文件
+def select_file():
+    filepath = fd.askopenfilenames(filetypes=[('.CSV','.csv'), ('.XLS','.xls')]) # 选择打开什么文件，返回文件名
+    if not len(filepath): 
+        return
+    
+    file_list.delete(1.0,'end')
+    fstr = '读取的文件:\n '
+    xls = []
+    for f in filepath:
+        fstr = fstr + '\n' + f
+        if f.endswith('csv') and ('源数据' not in f):
+            xls.append(f)
+            print('待处理csv/xls文件：', f)
 
+    # 获取目标数据
+    get_dist_data(xls)
+
+    # 'insert'表示光标插入位置
+    file_list.insert('insert',fstr)
+
+# 清除显示
+def clear_console():
+    file_list.delete(1.0,'end')
+
+# 删除列表中文件
+def delete_file():
+    context = file_list.get(1.0,'end').split('\n')
+    for c in context:
+        if os.path.isfile(c):
+            os.remove(c)
+    # fname = os.path.basename(i)
+    # os.rename(i, i.replace(fname, '(源数据)'+fname))
+    file_list.delete(1.0,'end')
+    file_list.insert('insert','删除了！！！')
 
 if __name__ == '__main__':
-    get_dist_data()
+    # get_dist_data()
     # input('按回车退出…')
+    root  = tk.Tk()  # 创建窗口对象
+    root.title('onbuy2店小蜜')
+    root.geometry('800x600')
+    # root.resizable(False, False) # 规定窗口不可缩放
+
+    f_lable = tk.Label(root, text='onbuy订单转店小蜜', font=('bold',20), justify='center',padx=20,pady=20).pack()
+    fm1 = tk.Frame(root)
+    select_btn = tk.Button(fm1, text ="选择文件", font='20', command = select_file)
+    clear_btn = tk.Button(fm1, text ="清除显示", font='20', command = clear_console)
+    delete_btn = tk.Button(fm1, text ="删除列表中的文件", font='20', command = delete_file)
+    file_list = tk.Text(root, width=80, height=20 ,padx=0,font=20)
+    fm1.pack()
+    select_btn.pack(side= 'left',padx=10,pady=10)
+    clear_btn.pack(side= 'left',padx=10,pady=10)
+    delete_btn.pack(side= 'left',padx=10,pady=10)
+    file_list.pack()
+
+    root.mainloop()  # 进入消息循环
+
