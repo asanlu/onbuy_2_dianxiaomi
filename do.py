@@ -9,7 +9,9 @@ dianxiaomi_col = ['*订单号', '*店铺账号', '*sku',	"属性(可填写SKU尺
                   '*单价', '总运费', '币种（默认USD）', '*买家姓名',	'*地址1',	'地址2',	'*城市',	'*省/州',	'*国家二字码',	'*邮编',	'电话',]
 # 获取onbuy中需要的数据
 onbuy_col = ['Order Number', 'SKU', 'Quantity', 'Product Unit Price', 'Customer', 'Delivery Address Name',
-             'Delivery Address Line 1', 'Delivery Address Line 2', 'Delivery Address Line 3', 'Delivery Address Town', 'Delivery Address County', 'Site', 'Delivery Address Postcode']
+             'Delivery Address Line 1', 'Delivery Address Line 2', 'Delivery Address Line 3', 'Delivery Address Town', 'Delivery Address County', 'Site', 'Delivery Address Postcode','Delivery Address Country']
+# 国家字段
+country_dict = {'United Kingdom': 'UK', 'GERMANY':'DE', 'SPAIN':'ES', 'FRANCE':'FR', 'ITALY':'IT','Austria': 'AT'}
 
 # 处理customer字段藏手机号
 def split_customer(str):
@@ -45,6 +47,7 @@ def get_onbuy_data(path=''):
     county = list(df['Delivery Address County'])
     address2 = list(df['Delivery Address Line 2'])
     address3 = list(df['Delivery Address Line 3'])
+    country = list(df['Delivery Address Country'])
     # print(df.loc[1, []], '-=======----')
     # print(town)
 
@@ -73,6 +76,9 @@ def get_onbuy_data(path=''):
             address3[i] = ''
         address2[i] = (address2[i]+','+address3[i]).strip(',')
 
+        # 国家转化处理
+        country[i] = country_dict[country[i]]
+
     # 处理表头数据
     dianxiaomi_li = {
         '*订单号': list(df['Order Number']),
@@ -88,7 +94,7 @@ def get_onbuy_data(path=''):
         '地址2': address2,
         '*城市': town,
         '*省/州': county,
-        '*国家二字码': ['UK']*df_length,
+        '*国家二字码': country,
         '*邮编': list(df['Delivery Address Postcode']),
         '电话': list(df['Customer']),
         '手机': empt,
@@ -210,6 +216,8 @@ def convert_file():
 
 # 清除显示
 def clear_console():
+    global file_list
+    file_list = []
     file_info.delete(1.0,'end')
 
 # 删除列表中文件
@@ -241,13 +249,13 @@ if __name__ == '__main__':
     fm1 = tk.Frame(root)
     select_btn = tk.Button(fm1, text ="选择文件", font='20', command = select_file)
     convert_btn = tk.Button(fm1, text ="合并转换", font='20', command = convert_file)
-    # clear_btn = tk.Button(fm1, text ="清除显示", font='20', command = clear_console)
+    clear_btn = tk.Button(fm1, text ="清除显示", font='20', command = clear_console)
     delete_btn = tk.Button(fm1, text ="删除列表中的文件", font='20', command = delete_file)
     file_info = tk.Text(root, width=80, height=20 ,padx=0,font=20)
     fm1.pack()
     select_btn.pack(side= 'left',padx=10,pady=10)
     convert_btn.pack(side= 'left',padx=10,pady=10)
-    # clear_btn.pack(side= 'left',padx=10,pady=10)
+    clear_btn.pack(side= 'left',padx=10,pady=10)
     delete_btn.pack(side= 'left',padx=10,pady=10)
     file_info.pack()
 
