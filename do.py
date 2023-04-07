@@ -4,7 +4,7 @@ import tkinter as tk
 # from tkinter import ttk
 from tkinter import filedialog as fd
 import traceback
-import dolog
+# import dolog
 
 # 店小秘需要的数据
 dianxiaomi_col = ['*订单号', '*店铺账号', '*sku',	"属性(可填写SKU尺寸、颜色等)", '*数量（大于0的整数）',
@@ -17,7 +17,8 @@ country_dict = {'United Kingdom': 'UK', 'GERMANY':'DE', 'SPAIN':'ES', 'FRANCE':'
 
 # 处理customer字段藏手机号
 def split_customer(str):
-    return str.split(',')[1]
+    arr = str.split(',')
+    return arr[1] if len(arr) == 2 else ''
 
 # 获取excel数据
 def get_onbuy_data(path=''):
@@ -79,7 +80,7 @@ def get_onbuy_data(path=''):
         address2[i] = (address2[i]+','+address3[i]).strip(',')
 
         # 国家转化处理
-        country[i] = country_dict[country[i]]
+        country[i] = country_dict.get(country[i], country[i])
 
     # 处理表头数据
     dianxiaomi_li = {
@@ -200,27 +201,27 @@ def convert_file():
 
     count_data = pd.DataFrame()
     
-    try:
-        o_name = file_list[0].split('/')[-1][:-4]
-        # print('o_name',o_name)
-        xls =[]
-        for f in file_list:
-            if f.endswith('csv') and ('源数据' not in f):
-                count_data = pd.concat([count_data, get_onbuy_data(f)])
-                # 重命名文件
-                #fname = os.path.basename(i)
-                # os.rename(i, i.replace(fname, '(源数据)'+fname))
-                print('【提示】待处理csv/xls文件：', f)
-        # Exception
-        # print('====', count_data)
-        count_data.to_excel(o_name+"店小秘订单.xls", index=False)
-        file_info.insert('insert',f'\n【提示】生成{o_name}店小秘订单文件')
-        print(f'【提示】生成{o_name}店小秘订单文件',)
+    # try:
+    o_name = file_list[0].split('/')[-1][:-4]
+    # print('o_name',o_name)
+    xls =[]
+    for f in file_list:
+        if f.endswith('csv') and ('源数据' not in f):
+            count_data = pd.concat([count_data, get_onbuy_data(f)])
+            # 重命名文件
+            #fname = os.path.basename(i)
+            # os.rename(i, i.replace(fname, '(源数据)'+fname))
+            print('【提示】待处理csv/xls文件：', f)
+    # Exception
+    # print('====', count_data)
+    count_data.to_excel(o_name+"店小秘订单.xls", index=False)
+    file_info.insert('insert',f'\n【提示】生成{o_name}店小秘订单文件')
+    print(f'【提示】生成{o_name}店小秘订单文件',)
 
-    except Exception as e:
-        file_info.insert('insert','\n【提示】转换出错，可查看log文件')   
-        log.error(e)
-        log.error(traceback.format_exc())
+    # except Exception as e:
+        # file_info.insert('insert',f'\n\n【提示】转换出错：{e}')   
+    #     log.error(e)
+        # print(traceback.format_exc())
         # log.error(f'{e.__traceback__.tb_frame.f_globals["__file__"]}: {e.__traceback__.tb_lineno}')   # 发生异常所在的文件:行数 
 
 # 清除显示
@@ -245,7 +246,7 @@ def delete_file():
 
     file_list =[]
 
-log = dolog.logging.getLogger(__name__)
+# log = dolog.logging.getLogger(__name__)
 if __name__ == '__main__':
     # get_dist_data()
     # input('按回车退出…')
