@@ -3,8 +3,10 @@ import os
 import tkinter as tk
 # from tkinter import ttk
 from tkinter import filedialog as fd
+import traceback
+import dolog
 
-# 店小蜜需要的数据
+# 店小秘需要的数据
 dianxiaomi_col = ['*订单号', '*店铺账号', '*sku',	"属性(可填写SKU尺寸、颜色等)", '*数量（大于0的整数）',
                   '*单价', '总运费', '币种（默认USD）', '*买家姓名',	'*地址1',	'地址2',	'*城市',	'*省/州',	'*国家二字码',	'*邮编',	'电话',]
 # 获取onbuy中需要的数据
@@ -197,22 +199,29 @@ def convert_file():
         return
 
     count_data = pd.DataFrame()
-    o_name = file_list[0].split('/')[-1][:-4]
-    # print('o_name',o_name)
-    xls =[]
-    for f in file_list:
-        if f.endswith('csv') and ('源数据' not in f):
-            count_data = pd.concat([count_data, get_onbuy_data(f)])
-            # 重命名文件
-            #fname = os.path.basename(i)
-            # os.rename(i, i.replace(fname, '(源数据)'+fname))
-            print('【提示】待处理csv/xls文件：', f)
-    # Exception
-    # print('====', count_data)
-    count_data.to_excel(o_name+"店小秘订单.xls", index=False)
-    file_info.insert('insert',f'\n【提示】生成{o_name}店小秘订单文件')
-    print(f'【提示】生成{o_name}店小秘订单文件',)
+    
+    try:
+        o_name = file_list[0].split('/')[-1][:-4]
+        # print('o_name',o_name)
+        xls =[]
+        for f in file_list:
+            if f.endswith('csv') and ('源数据' not in f):
+                count_data = pd.concat([count_data, get_onbuy_data(f)])
+                # 重命名文件
+                #fname = os.path.basename(i)
+                # os.rename(i, i.replace(fname, '(源数据)'+fname))
+                print('【提示】待处理csv/xls文件：', f)
+        # Exception
+        # print('====', count_data)
+        count_data.to_excel(o_name+"店小秘订单.xls", index=False)
+        file_info.insert('insert',f'\n【提示】生成{o_name}店小秘订单文件')
+        print(f'【提示】生成{o_name}店小秘订单文件',)
 
+    except Exception as e:
+        file_info.insert('insert','\n【提示】转换出错，可查看log文件')   
+        log.error(e)
+        log.error(traceback.format_exc())
+        # log.error(f'{e.__traceback__.tb_frame.f_globals["__file__"]}: {e.__traceback__.tb_lineno}')   # 发生异常所在的文件:行数 
 
 # 清除显示
 def clear_console():
@@ -234,18 +243,19 @@ def delete_file():
             file_info.insert('insert',f'【删除】{c}文件\n')
             os.remove(c)
 
-    file_list =[] 
+    file_list =[]
 
+log = dolog.logging.getLogger(__name__)
 if __name__ == '__main__':
     # get_dist_data()
     # input('按回车退出…')
     root  = tk.Tk()  # 创建窗口对象
-    root.title('onbuy2店小蜜')
+    root.title('onbuy2店小秘')
     root.geometry('800x600')
     # root.resizable(False, False) # 规定窗口不可缩放
 
     file_list = tuple()
-    f_lable = tk.Label(root, text='onbuy订单转店小蜜', font=('bold',20), justify='center',padx=20,pady=20).pack()
+    f_lable = tk.Label(root, text='onbuy订单转店小秘', font=('bold',20), justify='center',padx=20,pady=20).pack()
     fm1 = tk.Frame(root)
     select_btn = tk.Button(fm1, text ="选择文件", font='20', command = select_file)
     convert_btn = tk.Button(fm1, text ="合并转换", font='20', command = convert_file)
